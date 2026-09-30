@@ -204,17 +204,29 @@ ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
 INSERT INTO categorias (id, nombre, descripcion, activo) VALUES
 (1, 'medicamentos', 'Fármacos, analgésicos, antisépticos y productos de farmacia', 1),
 (2, 'Super', 'Abarrotes, víveres y productos esenciales de supermercado', 1),
-(3, 'Cuidado y Limpieza', 'Artículos de higiene personal y desinfección del hogar', 1)
+(3, 'Cuidado y Limpieza', 'Artículos de higiene personal y desinfección del hogar', 1),
+(4, 'alimentos', 'Alimentos, víveres y productos de consumo básico', 1),
+(5, 'bebidas', 'Bebidas, jugos, néctares y agua mineral', 1),
+(6, 'limpieza', 'Productos de limpieza del hogar y lavandería', 1),
+(7, 'higiene', 'Higiene personal, champú, jabones y cuidado dental', 1)
 ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
 
--- 3. Productos de primera necesidad (referenciados en wireframe)
+-- 3. Productos de primera necesidad y catálogo de tienda
 INSERT INTO productos (id, categoria_id, nombre, descripcion, precio, stock, unidad_medida, imagen_url, disponible) VALUES
-(1, 1, 'Alcohol Medicinal 70° (120ml)', 'Solución antiséptica tópica Alkofarma para desinfección cutánea.', 4.50, 45, 'unidad', 'assets/images/alcohol.png', 1),
-(2, 1, 'Paracetamol 120mg/5ml Jarabe', 'Analgésico y antipirético pediátrico para alivio de fiebre y dolor.', 8.20, 30, 'unidad', 'assets/images/paracetamol.png', 1),
-(3, 1, 'Solbitox Jarabe Niños', 'Antitusígeno y expectorante infantil de uso pediátrico.', 14.90, 25, 'unidad', 'assets/images/solbitox.png', 1),
-(4, 2, 'Papel Higiénico Super Premium (2 Rollos)', 'Papel higiénico hoja doble, 100% fibras naturales 40 metros.', 6.50, 80, 'paquete', 'assets/images/papel_super.png', 1),
-(5, 2, 'Arroz Extra Costeño 1kg', 'Arroz superior seleccionado de grano largo y rendidor.', 4.80, 100, 'kg', 'assets/images/arroz.png', 1),
-(6, 2, 'Aceite Vegetal Primor 1L', 'Aceite vegetal comestible refinado 100% puro.', 8.90, 60, 'litro', 'assets/images/aceite.png', 1),
-(7, 2, 'Leche Evaporada Entera Gloria 400g', 'Leche evaporada con vitaminas A y D para nutrición diaria.', 4.20, 120, 'unidad', 'assets/images/leche.png', 1),
-(8, 3, 'Jabón Antibacterial Protex 110g', 'Jabón en barra con protección antibacteriana para toda la familia.', 3.50, 90, 'unidad', 'assets/images/jabon.png', 1)
+(1, 4, 'Arroz Extra Superior Faraón 5kg', 'Arroz de grano largo, graneado perfecto para los almuerzos de la semana.', 21.90, 25, 'Bolsa de 5 kg', 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=500&q=80', 1),
+(2, 4, 'Aceite Vegetal Primor 1L', 'Aceite vegetal 100% puro para freír y cocinar diariamente.', 10.50, 18, 'Botella de 1 L', 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80', 1),
+(3, 5, 'Agua Mineral San Luis Sin Gas 2.5L', 'Agua de mesa purificada y refrescante para hidratarte todo el día.', 4.20, 30, 'Botella 2.5 L', 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=500&q=80', 1),
+(4, 5, 'Jugo Néctar Frugos del Valle Naranja 1L', 'Delicioso néctar con jugo de naranja natural sin preservantes.', 6.50, 20, 'Caja de 1 L', 'https://images.unsplash.com/photo-1613478223719-2ab802602423?auto=format&fit=crop&w=500&q=80', 1),
+(5, 6, 'Detergente Ariel Multiacción 2kg', 'Remueve las manchas más difíciles dejando tus prendas con aroma fresco.', 24.50, 15, 'Bolsa de 2 kg', 'https://images.unsplash.com/photo-1585837575652-267c041d77d4?auto=format&fit=crop&w=500&q=80', 1),
+(6, 6, 'Papel Higiénico Suave Pack x12 Rollos', 'Doble hoja de máxima suavidad y alto rendimiento para el hogar.', 16.90, 40, 'Pack de 12 rollos', 'https://images.unsplash.com/photo-1584556812952-905ffd0c611a?auto=format&fit=crop&w=500&q=80', 1),
+(7, 7, 'Shampoo Head & Shoulders Limpieza 375ml', 'Fórmula con control de caspa y limpieza profunda desde la raíz.', 17.50, 12, 'Frasco 375 ml', 'https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?auto=format&fit=crop&w=500&q=80', 1),
+(8, 7, 'Jabón de Tocador Camay Suave 3x125g', 'Jabón perfumado con aceites esenciales para la piel suave.', 9.20, 22, 'Pack 3 unidades', 'https://images.unsplash.com/photo-1607006482182-3d90615993e1?auto=format&fit=crop&w=500&q=80', 1),
+(9, 4, 'Pan Molde Blanco Bimbo 500g', 'Pan de molde suave, ideal para sándwiches y desayunos.', 8.20, 14, 'Bolsa 500 g', 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=500&q=80', 1),
+(10, 7, 'Crema Dental Colgate Triple Acción 75ml', 'Protección anticaries, blanqueamiento y aliento fresco.', 6.80, 35, 'Tubo 75 ml', 'https://images.unsplash.com/photo-1559598467-f8b76c8155d0?auto=format&fit=crop&w=500&q=80', 1),
+(11, 1, 'Alcohol Medicinal 70° (120ml)', 'Solución antiséptica tópica Alkofarma para desinfección cutánea.', 4.50, 45, 'unidad', 'assets/images/alcohol.png', 1),
+(12, 1, 'Paracetamol 120mg/5ml Jarabe', 'Analgésico y antipirético pediátrico para alivio de fiebre y dolor.', 8.20, 30, 'unidad', 'assets/images/paracetamol.png', 1),
+(13, 1, 'Solbitox Jarabe Niños', 'Antitusígeno y expectorante infantil de uso pediátrico.', 14.90, 25, 'unidad', 'assets/images/solbitox.png', 1),
+(14, 2, 'Papel Higiénico Super Premium (2 Rollos)', 'Papel higiénico hoja doble, 100% fibras naturales 40 metros.', 6.50, 80, 'paquete', 'assets/images/papel_super.png', 1),
+(15, 2, 'Leche Evaporada Entera Gloria 400g', 'Leche evaporada con vitaminas A y D para nutrición diaria.', 4.20, 120, 'unidad', 'assets/images/leche.png', 1),
+(16, 3, 'Jabón Antibacterial Protex 110g', 'Jabón en barra con protección antibacteriana para toda la familia.', 3.50, 90, 'unidad', 'assets/images/jabon.png', 1)
 ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);

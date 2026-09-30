@@ -1,8 +1,8 @@
 <?php
 /**
  * Fast Delivery - Router / Redireccionador Principal
- * Redirige las peticiones entrantes a Frontend/index.php
+ * Redirige la portada de la aplicación al módulo de la Tienda de Usuario (Delivery fast)
  */
 
-header("Location: Frontend/index.php");
+header("Location: Delivery fast/index.php");
 exit;

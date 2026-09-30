@@ -91,7 +91,7 @@ $categorias = ProductoService::getCategorias();
             <strong style="font-size: 13px; color: #ffffff;"><?= htmlspecialchars($currentUser['nombre']) ?></strong>
         </div>
         <div style="position: absolute; right: 24px; display:flex; align-items:center; gap:12px;">
-            <a href="productos.php" class="admin-topbar-logout" style="border-color:#38bdf8; color:#38bdf8;">
+            <a href="../Delivery fast/index.php" class="admin-topbar-logout" style="border-color:#38bdf8; color:#38bdf8;">
                 🛒 Ver Tienda
             </a>
             <a href="logout.php" class="admin-topbar-logout">
@@ -114,7 +114,7 @@ $categorias = ProductoService::getCategorias();
         </a>
 
         <!-- Icono 2: Home / Inicio -->
-        <a href="productos.php" class="sidebar-icon-btn" title="Inicio / Catálogo de Clientes">
+        <a href="../Delivery fast/index.php" class="sidebar-icon-btn" title="Inicio / Catálogo de Clientes">
             <svg viewBox="0 0 24 24">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke-width="2" stroke-linejoin="round"/>
                 <polyline points="9 22 9 12 15 12 15 22" stroke-width="2"/>
