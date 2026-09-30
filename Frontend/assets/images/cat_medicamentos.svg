@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130" fill="none">
+    <rect width="200" height="130" rx="12" fill="#f8fafc"/>
+    <!-- Frasco de jarabe -->
+    <rect x="25" y="45" width="30" height="50" rx="4" fill="#92400e"/>
+    <rect x="32" y="36" width="16" height="10" rx="2" fill="#ffffff" stroke="#cbd5e1"/>
+    <rect x="28" y="58" width="24" height="24" rx="2" fill="#ffffff"/>
+    <line x1="33" y1="68" x2="47" y2="68" stroke="#ef4444" stroke-width="3"/>
+    <line x1="40" y1="61" x2="40" y2="75" stroke="#ef4444" stroke-width="3"/>
+    
+    <!-- Blister de pastillas -->
+    <rect x="70" y="32" width="75" height="65" rx="6" fill="#e2e8f0" stroke="#94a3b8"/>
+    <!-- Pastillas azules y blancas -->
+    <circle cx="85" cy="48" r="8" fill="#3b82f6"/>
+    <circle cx="108" cy="48" r="8" fill="#ef4444"/>
+    <circle cx="130" cy="48" r="8" fill="#10b981"/>
+    <circle cx="85" cy="74" r="8" fill="#f59e0b"/>
+    <circle cx="108" cy="74" r="8" fill="#8b5cf6"/>
+    <circle cx="130" cy="74" r="8" fill="#06b6d4"/>
+    
+    <!-- Cápsulas sueltas en primer plano -->
+    <g transform="translate(155, 60) rotate(35)">
+        <rect x="0" y="0" width="14" height="30" rx="7" fill="#ef4444"/>
+        <rect x="0" y="15" width="14" height="15" rx="0" fill="#f8fafc"/>
+        <rect x="0" y="15" width="14" height="15" rx="7" fill="#f8fafc"/>
+    </g>
+</svg>

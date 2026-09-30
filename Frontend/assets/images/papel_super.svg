@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+    <rect width="160" height="160" rx="14" fill="#ffffff"/>
+    <!-- Paquete transparente de 2 rollos -->
+    <rect x="25" y="44" width="110" height="82" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+    
+    <!-- Rollo izquierdo (cilindro) -->
+    <ellipse cx="52" cy="58" rx="22" ry="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+    <ellipse cx="52" cy="58" rx="8" ry="3" fill="#cbd5e1"/>
+    
+    <!-- Rollo derecho (cilindro) -->
+    <ellipse cx="108" cy="58" rx="22" ry="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1"/>
+    <ellipse cx="108" cy="58" rx="8" ry="3" fill="#cbd5e1"/>
+
+    <!-- Etiqueta Negra y Dorada SUPER PREMIUM -->
+    <rect x="25" y="78" width="110" height="42" fill="#0f172a" rx="2"/>
+    <text x="70" y="93" font-size="11" fill="#facc15" font-weight="900" font-family="'Brush Script MT', cursive, sans-serif" text-anchor="middle">Super</text>
+    <text x="70" y="100" font-size="4" fill="#ffffff" font-weight="bold" letter-spacing="1" font-family="sans-serif" text-anchor="middle">PREMIUM</text>
+    <text x="44" y="112" font-size="7" fill="#ffffff" font-weight="bold" font-family="sans-serif">100%</text>
+    <text x="44" y="117" font-size="3" fill="#94a3b8" font-family="sans-serif">FIBRAS NATURALES</text>
+
+    <!-- Badge Metros -->
+    <circle cx="114" cy="98" r="10" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="114" y="99" font-size="7" fill="#0f172a" font-weight="900" text-anchor="middle" font-family="sans-serif">40</text>
+    <text x="114" y="104" font-size="3" fill="#64748b" text-anchor="middle" font-family="sans-serif">Metros</text>
+</svg>

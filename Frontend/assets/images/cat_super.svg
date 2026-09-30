@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 130" fill="none">
+    <rect width="200" height="130" rx="12" fill="#dcfce7"/>
+    <!-- Alimentos en la canasta -->
+    <!-- Botella de vino/aceite -->
+    <rect x="52" y="28" width="16" height="40" rx="3" fill="#1e3a8a"/>
+    <rect x="56" y="18" width="8" height="12" rx="1" fill="#93c5fd"/>
+    <!-- Baguette / Pan -->
+    <path d="M75 55 L90 20 C92 16, 98 18, 96 24 L85 55 Z" fill="#d97706" rx="4"/>
+    <!-- Lechuga / Vegetales verdes -->
+    <circle cx="115" cy="38" r="16" fill="#22c55e"/>
+    <circle cx="132" cy="42" r="14" fill="#15803d"/>
+    <circle cx="102" cy="42" r="12" fill="#4ade80"/>
+    <!-- Zanahoria -->
+    <polygon points="120,55 145,26 135,22" fill="#f97316"/>
+    <!-- Frutas / Tomate -->
+    <circle cx="82" cy="50" r="11" fill="#dc2626"/>
+
+    <!-- Canasta Roja de Supermercado -->
+    <path d="M40 52 L160 52 L148 105 L52 105 Z" fill="#dc2626"/>
+    <!-- Borde superior de canasta -->
+    <rect x="36" y="48" width="128" height="8" rx="3" fill="#b91c1c"/>
+    <!-- Rejillas de la canasta -->
+    <line x1="60" y1="58" x2="68" y2="100" stroke="#fca5a5" stroke-width="2"/>
+    <line x1="80" y1="58" x2="84" y2="100" stroke="#fca5a5" stroke-width="2"/>
+    <line x1="100" y1="58" x2="100" y2="100" stroke="#fca5a5" stroke-width="2"/>
+    <line x1="120" y1="58" x2="116" y2="100" stroke="#fca5a5" stroke-width="2"/>
+    <line x1="140" y1="58" x2="132" y2="100" stroke="#fca5a5" stroke-width="2"/>
+    <line x1="45" y1="74" x2="155" y2="74" stroke="#fca5a5" stroke-width="2"/>
+    <line x1="48" y1="88" x2="152" y2="88" stroke="#fca5a5" stroke-width="2"/>
+    <!-- Asa de la canasta -->
+    <path d="M50 48 C50 25, 150 25, 150 48" stroke="#991b1b" stroke-width="4" fill="none"/>
+</svg>

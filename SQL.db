@@ -1,0 +1,220 @@
+-- =============================================================================
+-- PROYECTO: Plataforma de Delivery de Productos de Primera Necesidad
+-- MOTOR: MySQL 8.0+ (AWS RDS Compatible)
+-- ENGINE: InnoDB | CHARSET: utf8mb4
+-- =============================================================================
+
+CREATE DATABASE IF NOT EXISTS delivery_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE delivery_db;
+
+-- -----------------------------------------------------------------------------
+-- Desactivar temporalmente revisión de claves foráneas para limpieza segura
+-- -----------------------------------------------------------------------------
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS historial_estados;
+DROP TABLE IF EXISTS pagos;
+DROP TABLE IF EXISTS detalle_pedidos;
+DROP TABLE IF EXISTS pedidos;
+DROP TABLE IF EXISTS productos;
+DROP TABLE IF EXISTS categorias;
+DROP TABLE IF EXISTS usuarios;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- =============================================================================
+-- TABLA 1: usuarios
+-- Gestiona clientes, repartidores y administradores del sistema.
+-- =============================================================================
+CREATE TABLE usuarios (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) NOT NULL,
+    rol ENUM('cliente', 'repartidor', 'administrador') NOT NULL DEFAULT 'cliente',
+    direccion_defecto VARCHAR(255) NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    INDEX idx_usuarios_rol (rol),
+    INDEX idx_usuarios_email (email)
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- TABLA 2: categorias
+-- Clasificación de productos (Abarrotes, Frutas y Verduras, Limpieza, etc.).
+-- =============================================================================
+CREATE TABLE categorias (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL UNIQUE,
+    descripcion TEXT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- TABLA 3: productos
+-- Catálogo de productos de primera necesidad, stock y precios.
+-- =============================================================================
+CREATE TABLE productos (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    categoria_id INT UNSIGNED NOT NULL,
+    nombre VARCHAR(150) NOT NULL,
+    descripcion TEXT NULL,
+    precio DECIMAL(10, 2) NOT NULL CHECK (precio >= 0),
+    stock INT UNSIGNED NOT NULL DEFAULT 0,
+    unidad_medida VARCHAR(20) NOT NULL DEFAULT 'unidad', -- 'kg', 'litro', 'unidad', 'paquete'
+    imagen_url VARCHAR(255) NULL,
+    disponible BOOLEAN NOT NULL DEFAULT TRUE,
+    creado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_productos_categoria
+        FOREIGN KEY (categoria_id) REFERENCES categorias(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+        
+    INDEX idx_productos_categoria (categoria_id),
+    INDEX idx_productos_disponible_stock (disponible, stock)
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- TABLA 4: pedidos
+-- Cabecera del pedido que agrupa la compra, cliente, repartidor y total.
+-- =============================================================================
+CREATE TABLE pedidos (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    cliente_id BIGINT UNSIGNED NOT NULL,
+    repartidor_id BIGINT UNSIGNED NULL,
+    estado ENUM('pendiente', 'confirmado', 'en_preparacion', 'en_camino', 'entregado', 'cancelado') NOT NULL DEFAULT 'pendiente',
+    total DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (total >= 0),
+    costo_envio DECIMAL(10, 2) NOT NULL DEFAULT 0.00 CHECK (costo_envio >= 0),
+    direccion_entrega VARCHAR(255) NOT NULL,
+    referencia_direccion VARCHAR(255) NULL,
+    fecha_pedido TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    fecha_entrega TIMESTAMP NULL,
+    
+    CONSTRAINT fk_pedidos_cliente
+        FOREIGN KEY (cliente_id) REFERENCES usuarios(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+        
+    CONSTRAINT fk_pedidos_repartidor
+        FOREIGN KEY (repartidor_id) REFERENCES usuarios(id)
+        ON DELETE SET NULL
+        ON UPDATE CASCADE,
+        
+    INDEX idx_pedidos_cliente (cliente_id),
+    INDEX idx_pedidos_repartidor (repartidor_id),
+    INDEX idx_pedidos_estado (estado),
+    INDEX idx_pedidos_fecha (fecha_pedido)
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- TABLA 5: detalle_pedidos
+-- Detalle línea por línea de los ítems solicitados en un pedido.
+-- =============================================================================
+CREATE TABLE detalle_pedidos (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pedido_id BIGINT UNSIGNED NOT NULL,
+    producto_id BIGINT UNSIGNED NOT NULL,
+    cantidad INT UNSIGNED NOT NULL CHECK (cantidad > 0),
+    precio_unitario DECIMAL(10, 2) NOT NULL CHECK (precio_unitario >= 0),
+    subtotal DECIMAL(10, 2) NOT NULL CHECK (subtotal >= 0),
+    
+    CONSTRAINT fk_detalle_pedido
+        FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+        
+    CONSTRAINT fk_detalle_producto
+        FOREIGN KEY (producto_id) REFERENCES productos(id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+        
+    INDEX idx_detalle_pedido (pedido_id),
+    INDEX idx_detalle_producto (producto_id)
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- TABLA 6: pagos
+-- Registro de transacciones monetarias asociadas a los pedidos.
+-- =============================================================================
+CREATE TABLE pagos (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pedido_id BIGINT UNSIGNED NOT NULL,
+    metodo_pago ENUM('efectivo', 'yape', 'plin', 'tarjeta', 'transferencia') NOT NULL,
+    monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),
+    estado_pago ENUM('pendiente', 'completado', 'fallido', 'reembolsado') NOT NULL DEFAULT 'pendiente',
+    numero_operacion VARCHAR(100) NULL,
+    fecha_pago TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT fk_pagos_pedido
+        FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+        
+    INDEX idx_pagos_pedido (pedido_id),
+    INDEX idx_pagos_estado (estado_pago)
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- TABLA 7: historial_estados
+-- Bitácora de seguimiento y auditoría del ciclo de vida de cada entrega.
+-- =============================================================================
+CREATE TABLE historial_estados (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    pedido_id BIGINT UNSIGNED NOT NULL,
+    estado_anterior VARCHAR(50) NULL,
+    estado_nuevo VARCHAR(50) NOT NULL,
+    fecha_cambio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    observacion VARCHAR(255) NULL,
+    
+    CONSTRAINT fk_historial_pedido
+        FOREIGN KEY (pedido_id) REFERENCES pedidos(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+        
+    INDEX idx_historial_pedido (pedido_id),
+    INDEX idx_historial_fecha (fecha_cambio)
+) ENGINE=InnoDB;
+
+-- =============================================================================
+-- DATOS INICIALES / SEED DATA
+-- Cuentas de prueba, categorías y catálogo de productos esenciales
+-- =============================================================================
+
+-- 1. Usuarios de prueba (contraseñas encriptadas con BCRYPT)
+-- Clave admin: admin123
+-- Clave cliente: cliente123
+-- Clave repartidor: repartidor123
+INSERT INTO usuarios (id, nombre, apellido, email, password_hash, telefono, rol, direccion_defecto, activo) VALUES
+(1, 'Administrador', 'Fast Delivery', 'admin@fastdelivery.com', '$2y$10$rpx10wm/J06wnN8ouwwKu.L.pSjxI8wFyUeGpReeLD1P.LcWO8jKe', '+51999888777', 'administrador', 'Av. Central 100, Lima', 1),
+(2, 'Juan', 'Pérez García', 'cliente@fastdelivery.com', '$2y$10$4sJhtx5luQicZ4LvnItrI.bcuAFbmBaOEBnwHOf1uIoKmd4esDH9a', '+51987654321', 'cliente', 'Jr. Los Álamos 450, Lima', 1),
+(3, 'Carlos', 'Gómez Ruiz', 'repartidor@fastdelivery.com', '$2y$10$ItvOITw9tZ2JvkDS7JY6fevsP7d8zuYn4KL0LT1/IqxdOei.kzXpm', '+51912345678', 'repartidor', 'Av. Arequipa 1234, Lima', 1)
+ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
+
+-- 2. Categorías principales
+INSERT INTO categorias (id, nombre, descripcion, activo) VALUES
+(1, 'medicamentos', 'Fármacos, analgésicos, antisépticos y productos de farmacia', 1),
+(2, 'Super', 'Abarrotes, víveres y productos esenciales de supermercado', 1),
+(3, 'Cuidado y Limpieza', 'Artículos de higiene personal y desinfección del hogar', 1)
+ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);
+
+-- 3. Productos de primera necesidad (referenciados en wireframe)
+INSERT INTO productos (id, categoria_id, nombre, descripcion, precio, stock, unidad_medida, imagen_url, disponible) VALUES
+(1, 1, 'Alcohol Medicinal 70° (120ml)', 'Solución antiséptica tópica Alkofarma para desinfección cutánea.', 4.50, 45, 'unidad', 'assets/images/alcohol.png', 1),
+(2, 1, 'Paracetamol 120mg/5ml Jarabe', 'Analgésico y antipirético pediátrico para alivio de fiebre y dolor.', 8.20, 30, 'unidad', 'assets/images/paracetamol.png', 1),
+(3, 1, 'Solbitox Jarabe Niños', 'Antitusígeno y expectorante infantil de uso pediátrico.', 14.90, 25, 'unidad', 'assets/images/solbitox.png', 1),
+(4, 2, 'Papel Higiénico Super Premium (2 Rollos)', 'Papel higiénico hoja doble, 100% fibras naturales 40 metros.', 6.50, 80, 'paquete', 'assets/images/papel_super.png', 1),
+(5, 2, 'Arroz Extra Costeño 1kg', 'Arroz superior seleccionado de grano largo y rendidor.', 4.80, 100, 'kg', 'assets/images/arroz.png', 1),
+(6, 2, 'Aceite Vegetal Primor 1L', 'Aceite vegetal comestible refinado 100% puro.', 8.90, 60, 'litro', 'assets/images/aceite.png', 1),
+(7, 2, 'Leche Evaporada Entera Gloria 400g', 'Leche evaporada con vitaminas A y D para nutrición diaria.', 4.20, 120, 'unidad', 'assets/images/leche.png', 1),
+(8, 3, 'Jabón Antibacterial Protex 110g', 'Jabón en barra con protección antibacteriana para toda la familia.', 3.50, 90, 'unidad', 'assets/images/jabon.png', 1)
+ON DUPLICATE KEY UPDATE nombre=VALUES(nombre);

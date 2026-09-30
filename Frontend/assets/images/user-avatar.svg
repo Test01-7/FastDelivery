@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+    <!-- Círculo exterior -->
+    <circle cx="50" cy="50" r="46" stroke="#000000" stroke-width="4.5" fill="none"/>
+    <!-- Cabeza -->
+    <circle cx="50" cy="38" r="16" fill="#000000"/>
+    <!-- Hombros / Torso -->
+    <path d="M22 78 C22 62, 34 58, 50 58 C66 58, 78 62, 78 78 Z" fill="#000000"/>
+</svg>
