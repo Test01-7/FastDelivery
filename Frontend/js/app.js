@@ -2,14 +2,15 @@
  * FAST DELIVERY - Lógica de cliente
  */
 
-let carrito = JSON.parse(localStorage.getItem('fastdelivery_cart')) || [];
+let carrito = leerCarrito();
 let categoriaActiva = 'todos';
 let busquedaTexto = '';
-let metodoPago = 'Yape';
 let productoSeleccionadoModal = null;
 let cantidadModal = 1;
 
 document.addEventListener('DOMContentLoaded', () => {
+  categoriaActiva = new URLSearchParams(location.search).get('categoria') || 'todos';
+  busquedaTexto = (new URLSearchParams(location.search).get('buscar') || '').toLowerCase();
   renderProductos();
   actualizarUI();
   setupEvents();
@@ -20,6 +21,7 @@ function setupEvents() {
   const catButtons = document.querySelectorAll('.cat-chip');
   catButtons.forEach(btn => {
     btn.addEventListener('click', (e) => {
+      e.preventDefault();
       catButtons.forEach(b => b.classList.remove('active'));
       const target = e.currentTarget;
       target.classList.add('active');
@@ -63,48 +65,11 @@ function setupEvents() {
     });
   }
 
-  // Checkout Modal
   const btnCheckout = document.getElementById('btn-checkout');
-  const modalCheckout = document.getElementById('modal-checkout');
-  const closeCheckoutModal = document.getElementById('close-checkout-modal');
-
-  if (btnCheckout && modalCheckout) {
-    btnCheckout.addEventListener('click', () => {
-      if (carrito.length === 0) {
-        mostrarToast('Agrega productos al carrito para continuar');
-        return;
-      }
-      cartOverlay.classList.remove('active');
-      actualizarResumenCheckout();
-      modalCheckout.classList.add('active');
-    });
-  }
-
-  if (closeCheckoutModal && modalCheckout) {
-    closeCheckoutModal.addEventListener('click', () => {
-      modalCheckout.classList.remove('active');
-    });
-  }
-
-  // Métodos de pago (Yape, Plin, Efectivo)
-  const paymentBoxes = document.querySelectorAll('.payment-box');
-  const inputMetodoPago = document.getElementById('input-metodo-pago');
-  paymentBoxes.forEach(box => {
-    box.addEventListener('click', () => {
-      paymentBoxes.forEach(b => b.classList.remove('active'));
-      box.classList.add('active');
-      metodoPago = box.getAttribute('data-pago');
-      if (inputMetodoPago) inputMetodoPago.value = metodoPago;
-    });
+  if (btnCheckout) btnCheckout.addEventListener('click', () => {
+    if (!carrito.length) return mostrarToast('Agrega productos al carrito para continuar');
+    window.location.href = 'checkout.php';
   });
-
-  const checkoutForm = document.getElementById('checkout-form');
-  if (checkoutForm) {
-    checkoutForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      procesarOrdenConPHP();
-    });
-  }
 }
 
 // Renderizar Productos en Grid
@@ -137,10 +102,10 @@ function renderProductos() {
     return `
       <div class="card-product">
         <div class="product-img-box" onclick="verDetalleProducto(${prod.id})" style="cursor: pointer;">
-          <img src="${prod.imagen}" alt="${prod.nombre}">
+          <img src="${escapar(prod.imagen)}" alt="${escapar(prod.nombre)}">
         </div>
-        <div class="product-unit-tag">${prod.unidad}</div>
-        <h4 class="product-name" onclick="verDetalleProducto(${prod.id})" style="cursor: pointer;">${prod.nombre}</h4>
+        <div class="product-unit-tag">${escapar(prod.unidad)}</div>
+        <h4 class="product-name" onclick="verDetalleProducto(${prod.id})" style="cursor: pointer;">${escapar(prod.nombre)}</h4>
         <div style="font-size: 0.75rem; color: #16a34a; font-weight: 600; margin-bottom: 0.4rem;">
           Stock: ${prod.stock} unidades
         </div>
@@ -195,32 +160,12 @@ function cambiarCantModal(delta) {
   document.getElementById('modal-prod-cant').textContent = cantidadModal;
 }
 
-// Ubicación Actual Geolocation
-function obtenerUbicacionActual() {
-  if (navigator.geolocation) {
-    mostrarToast('Obteniendo tu ubicación actual...');
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const lat = position.coords.latitude.toFixed(4);
-        const lng = position.coords.longitude.toFixed(4);
-        document.getElementById('input-direccion').value = `Ubicación GPS (${lat}, ${lng}) - Av. Principal`;
-        document.getElementById('top-location-text').textContent = `GPS (${lat}, ${lng})`;
-        mostrarToast('Ubicación capturada correctamente');
-      },
-      (error) => {
-        document.getElementById('input-direccion').value = 'Av. Primavera 123, San Miguel';
-        mostrarToast('Ubicación establecida por defecto: San Miguel');
-      }
-    );
-  } else {
-    document.getElementById('input-direccion').value = 'Av. Primavera 123, San Miguel';
-  }
-}
-
 // Agregar y Editar Carrito
 function agregarAlCarrito(id, cantidadSumar = 1) {
   const producto = PRODUCTOS.find(p => p.id === id);
   if (!producto) return;
+  const actual = carrito.find(i => i.id === id)?.cantidad || 0;
+  if (actual + cantidadSumar > producto.stock) return mostrarToast('No hay suficiente stock disponible');
 
   const precio = producto.precio_oferta || producto.precio;
   const itemExistente = carrito.find(i => i.id === id);
@@ -245,6 +190,8 @@ function agregarAlCarrito(id, cantidadSumar = 1) {
 function cambiarCantidad(id, delta) {
   const idx = carrito.findIndex(i => i.id === id);
   if (idx > -1) {
+    const prod = PRODUCTOS.find(p => p.id === id);
+    if (delta > 0 && prod && carrito[idx].cantidad + delta > prod.stock) return mostrarToast('No hay suficiente stock disponible');
     carrito[idx].cantidad += delta;
     if (carrito[idx].cantidad <= 0) {
       carrito.splice(idx, 1);
@@ -259,7 +206,7 @@ function eliminarDelCarrito(id) {
 }
 
 function guardarYActualizar() {
-  localStorage.setItem('fastdelivery_cart', JSON.stringify(carrito));
+  guardarCarrito(carrito);
   renderProductos();
   actualizarUI();
 }
@@ -289,9 +236,9 @@ function actualizarUI() {
     } else {
       drawerBody.innerHTML = carrito.map(item => `
         <div class="cart-item-row">
-          <img src="${item.imagen}" alt="${item.nombre}" class="cart-item-img">
+          <img src="${escapar(item.imagen)}" alt="${escapar(item.nombre)}" class="cart-item-img">
           <div class="cart-item-details">
-            <div class="cart-item-title">${item.nombre}</div>
+            <div class="cart-item-title">${escapar(item.nombre)}</div>
             <div class="cart-item-price">S/ ${(item.precio * item.cantidad).toFixed(2)}</div>
           </div>
           <div class="inline-qty-control">
@@ -327,86 +274,7 @@ function actualizarUI() {
     }
   }
 
-  actualizarResumenCheckout();
-}
 
-function actualizarResumenCheckout() {
-  const subtotal = carrito.reduce((sum, i) => sum + (i.precio * i.cantidad), 0);
-  const envio = (subtotal >= 50 || subtotal === 0) ? 0.00 : 5.00;
-  const total = subtotal + envio;
-
-  const subEl = document.getElementById('checkout-subtotal');
-  const envEl = document.getElementById('checkout-envio');
-  const totEl = document.getElementById('checkout-total');
-
-  if (subEl) subEl.textContent = `S/ ${subtotal.toFixed(2)}`;
-  if (envEl) envEl.textContent = envio === 0 ? 'GRATIS' : `S/ ${envio.toFixed(2)}`;
-  if (totEl) totEl.textContent = `S/ ${total.toFixed(2)}`;
-}
-
-// Procesar Orden enviando datos al Backend en PHP (procesar_pedido.php)
-function procesarOrdenConPHP() {
-  const nombre = document.getElementById('input-nombre').value;
-  const direccion = document.getElementById('input-direccion').value;
-  const referencia = document.getElementById('input-referencia').value;
-  const telefono = document.getElementById('input-telefono').value;
-
-  const modalCheckout = document.getElementById('modal-checkout');
-
-  const formData = new FormData();
-  formData.append('nombre', nombre);
-  formData.append('direccion', direccion);
-  formData.append('referencia', referencia);
-  formData.append('telefono', telefono);
-  formData.append('metodo_pago', metodoPago);
-  formData.append('carrito', JSON.stringify(carrito));
-
-  fetch('procesar_pedido.php', {
-    method: 'POST',
-    body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === 'success') {
-      if (modalCheckout) modalCheckout.classList.remove('active');
-
-      const pedido = data.pedido;
-      carrito = [];
-      guardarYActualizar();
-
-      mostrarToast('Pedido ' + pedido.id_pedido + ' confirmado');
-      
-      // Redirigir a la página de Seguimiento del Pedido
-      setTimeout(() => {
-        window.location.href = 'seguimiento.php?id=' + encodeURIComponent(pedido.id_pedido);
-      }, 1000);
-    } else {
-      mostrarToast('Error: ' + data.mensaje);
-    }
-  })
-  .catch(err => {
-    console.error('Error enviando pedido a PHP:', err);
-    mostrarToast('Error al procesar el pedido con el servidor');
-  });
-}
-
-function switchAuthTab(tab) {
-  const tabLogin = document.getElementById('tab-login');
-  const tabRegister = document.getElementById('tab-register');
-  const extraFields = document.getElementById('auth-extra-fields');
-  const btnSubmit = document.getElementById('btn-auth-submit');
-
-  if (tab === 'login') {
-    tabLogin.style.opacity = '1';
-    tabRegister.style.opacity = '0.6';
-    extraFields.style.display = 'none';
-    btnSubmit.textContent = 'Iniciar sesión';
-  } else {
-    tabLogin.style.opacity = '0.6';
-    tabRegister.style.opacity = '1';
-    extraFields.style.display = 'block';
-    btnSubmit.textContent = 'Registrarse';
-  }
 }
 
 // Toast flotante natural

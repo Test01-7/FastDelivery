@@ -4,7 +4,7 @@
  * Consultas y operaciones CRUD para clientes y panel de administración
  */
 
-require_once __DIR__ . '/conexion.php';
+require_once __DIR__ . '/../config/conexion.php';
 
 class ProductoService {
 
@@ -25,7 +25,7 @@ class ProductoService {
     /**
      * Obtener productos con filtros de búsqueda y categoría
      */
-    public static function getProductos(?int $categoriaId = null, ?string $busqueda = null, int $limit = 50, int $offset = 0): array {
+    public static function getProductos(?int $categoriaId = null, ?string $busqueda = null, int $limit = 50, int $offset = 0, bool $soloDisponibles = false): array {
         try {
             $db = getDB();
             $sql = "
@@ -36,6 +36,7 @@ class ProductoService {
                 WHERE 1=1
             ";
             $params = [];
+            if ($soloDisponibles) $sql .= ' AND p.disponible = 1 AND c.activo = 1';
 
             if ($categoriaId !== null && $categoriaId > 0) {
                 $sql .= " AND p.categoria_id = :categoria_id";
@@ -43,8 +44,10 @@ class ProductoService {
             }
 
             if (!empty($busqueda)) {
-                $sql .= " AND (p.nombre LIKE :busqueda OR p.descripcion LIKE :busqueda OR c.nombre LIKE :busqueda)";
+                $sql .= " AND (p.nombre LIKE :busqueda OR p.descripcion LIKE :descripcion OR c.nombre LIKE :categoria)";
                 $params[':busqueda'] = "%{$busqueda}%";
+                $params[':descripcion'] = "%{$busqueda}%";
+                $params[':categoria'] = "%{$busqueda}%";
             }
 
             $sql .= " ORDER BY p.id ASC LIMIT :limit OFFSET :offset";
@@ -79,8 +82,10 @@ class ProductoService {
             }
 
             if (!empty($busqueda)) {
-                $sql .= " AND (p.nombre LIKE :busqueda OR p.descripcion LIKE :busqueda)";
+                $sql .= " AND (p.nombre LIKE :busqueda OR p.descripcion LIKE :descripcion OR c.nombre LIKE :categoria)";
                 $params[':busqueda'] = "%{$busqueda}%";
+                $params[':descripcion'] = "%{$busqueda}%";
+                $params[':categoria'] = "%{$busqueda}%";
             }
 
             $stmt = $db->prepare($sql);
@@ -126,11 +131,11 @@ class ProductoService {
             $precio = (float)($data['precio'] ?? 0);
             $stock = (int)($data['stock'] ?? 0);
             $unidad_medida = trim($data['unidad_medida'] ?? 'unidad');
-            $imagen_url = trim($data['imagen_url'] ?? 'assets/images/default.png');
+            $imagen_url = trim($data['imagen_url'] ?? 'assets/images/default.svg');
             $disponible = isset($data['disponible']) ? (int)$data['disponible'] : 1;
 
-            if (empty($nombre) || $precio <= 0) {
-                return ['success' => false, 'message' => 'El título y el precio son obligatorios.'];
+            if (empty($nombre) || $precio <= 0 || $stock < 0 || !ctype_digit((string)($data['stock'] ?? '0')) || strlen($nombre) > 150 || !$unidad_medida || strlen($unidad_medida) > 20) {
+                return ['success' => false, 'message' => 'Completa nombre, precio positivo, stock entero y unidad válida.'];
             }
 
             $stmt = $db->prepare("
@@ -151,7 +156,7 @@ class ProductoService {
             return ['success' => true, 'id' => $db->lastInsertId(), 'message' => 'Producto creado con éxito.'];
         } catch (Exception $e) {
             error_log("Error en crearProducto: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al guardar el producto: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo guardar el producto. Revisa los datos y la conexión.'];
         }
     }
 
@@ -171,8 +176,8 @@ class ProductoService {
             $imagen_url = trim($data['imagen_url'] ?? '');
             $disponible = isset($data['disponible']) ? (int)$data['disponible'] : 1;
 
-            if (empty($nombre) || $precio <= 0) {
-                return ['success' => false, 'message' => 'El título y el precio son obligatorios.'];
+            if (empty($nombre) || $precio <= 0 || $stock < 0 || !ctype_digit((string)($data['stock'] ?? '0')) || strlen($nombre) > 150 || !$unidad_medida || strlen($unidad_medida) > 20) {
+                return ['success' => false, 'message' => 'Completa nombre, precio positivo, stock entero y unidad válida.'];
             }
 
             $sql = "
@@ -204,7 +209,7 @@ class ProductoService {
             return ['success' => true, 'message' => 'Producto actualizado correctamente.'];
         } catch (Exception $e) {
             error_log("Error en actualizarProducto: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al actualizar: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo actualizar el producto. Revisa los datos y la conexión.'];
         }
     }
 
@@ -215,23 +220,12 @@ class ProductoService {
         try {
             $db = getDB();
             
-            // Verificar si el producto tiene pedidos asociados
-            $checkStmt = $db->prepare("SELECT COUNT(*) FROM detalle_pedidos WHERE producto_id = :id");
-            $checkStmt->execute([':id' => $id]);
-            if ($checkStmt->fetchColumn() > 0) {
-                // Si tiene pedidos, hacer soft delete
-                $stmt = $db->prepare("UPDATE productos SET disponible = 0 WHERE id = :id");
-                $stmt->execute([':id' => $id]);
-                return ['success' => true, 'message' => 'El producto tiene pedidos asociados; se marcó como no disponible.'];
-            }
-
-            $stmt = $db->prepare("DELETE FROM productos WHERE id = :id");
+            $stmt = $db->prepare('UPDATE productos SET disponible = 0 WHERE id = :id');
             $stmt->execute([':id' => $id]);
-
-            return ['success' => true, 'message' => 'Producto eliminado de la base de datos con éxito.'];
+            return ['success' => true, 'message' => 'Producto desactivado. Su historial se conserva.'];
         } catch (Exception $e) {
             error_log("Error en eliminarProducto: " . $e->getMessage());
-            return ['success' => false, 'message' => 'Error al eliminar producto: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'No se pudo desactivar el producto. Intenta nuevamente.'];
         }
     }
 }

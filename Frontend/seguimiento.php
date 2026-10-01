@@ -1,27 +1,7 @@
 <?php
-session_start();
-require_once __DIR__ . '/includes/productos.php';
-require_once __DIR__ . '/../Backend/services/pedidos.php';
-
-$id_pedido = isset($_GET['id']) ? trim($_GET['id']) : '';
-$pedido = null;
-
-if (!empty($id_pedido)) {
-    $pedido = PedidoService::getPedidoById($id_pedido);
-}
-
-if (!$pedido && isset($_SESSION['pedidos']) && is_array($_SESSION['pedidos'])) {
-    foreach ($_SESSION['pedidos'] as $p) {
-        if ($p['id_pedido'] === $id_pedido) {
-            $pedido = $p;
-            break;
-        }
-    }
-}
-
-if (!$pedido && isset($_SESSION['ultimo_pedido'])) {
-    $pedido = $_SESSION['ultimo_pedido'];
-}
+require_once __DIR__ . '/../Backend/controllers/consultas_pedidos.php';
+$id_pedido = is_string($_GET['id'] ?? '') ? trim($_GET['id'] ?? '') : '';
+$pedido = pedidoDelUsuario($id_pedido, $currentUser);
 
 // Estados oficiales
 $estados = [
@@ -157,6 +137,7 @@ $paso_actual_num = isset($estados[$estado_actual_str]) ? $estados[$estado_actual
         <?php
         $pct_width = (($paso_actual_num - 1) / 4) * 84;
         ?>
+        <?php if ($pedido['estado_db'] !== 'cancelado'): ?>
         <div class="stepper">
           <div class="stepper-progress" style="width: <?php echo $pct_width; ?>%;"></div>
 
@@ -186,9 +167,10 @@ $paso_actual_num = isset($estados[$estado_actual_str]) ? $estados[$estado_actual
           </div>
         </div>
 
+        <?php else: ?><p style="padding:1rem;background:#fef2f2;color:#991b1b;border-radius:10px;margin-top:1rem">Este pedido fue cancelado. No se realizará la entrega.</p><?php endif; ?>
         <!-- Detalle del Pedido -->
         <div style="background: #f8fafc; padding: 1.2rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-top: 2rem;">
-          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem;">Detalle del Pedido (Consultado desde MySQL RDS)</h4>
+          <h4 style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.8rem; border-bottom: 1px solid #e2e8f0; padding-bottom: 0.4rem;">Detalle del pedido</h4>
           <p style="font-size: 0.875rem; margin-bottom: 0.4rem;"><strong>Cliente:</strong> <?php echo htmlspecialchars($pedido['cliente']); ?></p>
           <p style="font-size: 0.875rem; margin-bottom: 0.4rem;"><strong>Dirección:</strong> <?php echo htmlspecialchars($pedido['direccion']); ?> <?php echo !empty($pedido['referencia']) ? '(' . htmlspecialchars($pedido['referencia']) . ')' : ''; ?></p>
           <p style="font-size: 0.875rem; margin-bottom: 0.4rem;"><strong>Método de Pago:</strong> <?php echo htmlspecialchars($pedido['metodo_pago']); ?></p>

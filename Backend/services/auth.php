@@ -4,7 +4,7 @@
  * Manejo de sesiones, hash de contraseñas y redirección según rol
  */
 
-require_once __DIR__ . '/conexion.php';
+require_once __DIR__ . '/../config/conexion.php';
 
 class AuthService {
     
@@ -13,7 +13,7 @@ class AuthService {
      */
     public static function login(string $identificador, string $password): array {
         $identificador = trim($identificador);
-        $password = trim($password);
+        // Las contraseñas conservan sus espacios originales.
 
         if (empty($identificador) || empty($password)) {
             return [
@@ -58,39 +58,7 @@ class AuthService {
                 ];
             }
 
-            // Regenerar ID de sesión para prevenir Session Fixation si las cabeceras no se han enviado
-            if (session_status() === PHP_SESSION_NONE) {
-                session_start();
-            }
-            if (!headers_sent()) {
-                session_regenerate_id(true);
-            }
-
-            // Guardar datos en la sesión
-            $_SESSION['user_id'] = (int)$user['id'];
-            $_SESSION['user_nombre'] = $user['nombre'];
-            $_SESSION['user_apellido'] = $user['apellido'];
-            $_SESSION['user_email'] = $user['email'];
-            $_SESSION['user_rol'] = $user['rol'];
-            $_SESSION['user_telefono'] = $user['telefono'];
-            $_SESSION['user_direccion'] = $user['direccion_defecto'];
-            $_SESSION['logged_in_time'] = time();
-
-            // Determinar la URL de redirección según el rol de la base de datos
-            $redirectUrl = self::getRedirectUrlForRole($user['rol']);
-
-            return [
-                'success' => true,
-                'message' => 'Inicio de sesión exitoso.',
-                'rol' => $user['rol'],
-                'user' => [
-                    'id' => $user['id'],
-                    'nombre' => $user['nombre'] . ' ' . $user['apellido'],
-                    'email' => $user['email'],
-                    'rol' => $user['rol']
-                ],
-                'redirect' => $redirectUrl
-            ];
+            return self::crearSesion($user);
 
         } catch (Exception $e) {
             error_log("Error en AuthService::login: " . $e->getMessage());
@@ -101,6 +69,58 @@ class AuthService {
         }
     }
 
+    public static function demo(string $rol): array {
+        if (!DEMO_MODE || !in_array($rol, ['administrador', 'cliente', 'repartidor'], true)) {
+            return ['success' => false, 'message' => 'El acceso de presentación no está disponible.'];
+        }
+        try {
+            $stmt = getDB()->prepare('SELECT id, nombre, apellido, email, telefono, rol, direccion_defecto FROM usuarios WHERE rol = ? AND activo = 1 ORDER BY id LIMIT 1');
+            $stmt->execute([$rol]);
+            $user = $stmt->fetch();
+            if (!$user) return ['success' => false, 'message' => 'No hay una cuenta activa de este rol para la demostración.'];
+            return self::crearSesion($user);
+        } catch (Throwable $exception) {
+            error_log($exception->getMessage());
+            return ['success' => false, 'message' => 'No se pudo abrir la demostración. Comprueba la conexión con MySQL.'];
+        }
+    }
+
+    private static function crearSesion(array $user): array {
+        // Regenerar ID de sesión para prevenir Session Fixation si las cabeceras no se han enviado
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (!headers_sent()) {
+            session_regenerate_id(true);
+        }
+
+        // Guardar datos en la sesión
+        $_SESSION['user_id'] = (int)$user['id'];
+        $_SESSION['user_nombre'] = $user['nombre'];
+        $_SESSION['user_apellido'] = $user['apellido'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_rol'] = $user['rol'];
+        $_SESSION['user_telefono'] = $user['telefono'];
+        $_SESSION['user_direccion'] = $user['direccion_defecto'];
+        $_SESSION['logged_in_time'] = time();
+
+        // Determinar la URL de redirección según el rol de la base de datos
+        $redirectUrl = self::getRedirectUrlForRole($user['rol']);
+
+        return [
+            'success' => true,
+            'message' => 'Inicio de sesión exitoso.',
+            'rol' => $user['rol'],
+            'user' => [
+                'id' => $user['id'],
+                'nombre' => $user['nombre'] . ' ' . $user['apellido'],
+                'email' => $user['email'],
+                'rol' => $user['rol']
+            ],
+            'redirect' => $redirectUrl
+        ];
+    }
+
     /**
      * Registro de nuevo cliente
      */
@@ -108,17 +128,12 @@ class AuthService {
         $nombre = trim($data['nombre'] ?? '');
         $apellido = trim($data['apellido'] ?? '');
         $email = trim($data['email'] ?? '');
-        $password = trim($data['password'] ?? '');
+        $password = $data['password'] ?? '';
         $telefono = trim($data['telefono'] ?? '');
         $direccion = trim($data['direccion'] ?? '');
-        $rol = $data['rol'] ?? 'cliente'; // Por defecto cliente
+        $rol = 'cliente'; // El registro público no asigna privilegios.
 
-        // Solo permitir roles válidos del ENUM
-        if (!in_array($rol, ['cliente', 'repartidor', 'administrador'])) {
-            $rol = 'cliente';
-        }
-
-        if (empty($nombre) || empty($email) || empty($password)) {
+        if (empty($nombre) || empty($apellido) || empty($email) || empty($password) || empty($telefono) || strlen($nombre) > 100 || strlen($apellido) > 100 || strlen($email) > 150 || strlen($telefono) > 20 || strlen($direccion) > 255) {
             return [
                 'success' => false,
                 'message' => 'Por favor complete todos los campos obligatorios.'
@@ -182,7 +197,7 @@ class AuthService {
             error_log("Error en AuthService::register: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Error al registrar usuario: ' . $e->getMessage()
+                'message' => 'No se pudo registrar el usuario. Intente nuevamente.'
             ];
         }
     }
@@ -195,11 +210,11 @@ class AuthService {
             case 'administrador':
                 return 'admin.php';
             case 'cliente':
-                return 'productos.php';
+                return 'index.php';
             case 'repartidor':
-                return 'repartidor.php';
+                return 'mis_pedidos.php';
             default:
-                return 'productos.php';
+                return 'index.php';
         }
     }
 
@@ -207,32 +222,8 @@ class AuthService {
      * Verificar si el usuario tiene sesión activa y los roles requeridos
      */
     public static function requireAuth(array $allowedRoles = []): array {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-
-        if (empty($_SESSION['user_id'])) {
-            header('Location: index.php?error=requiere_login');
-            exit;
-        }
-
-        $userRole = $_SESSION['user_rol'] ?? '';
-
-        if (!empty($allowedRoles) && !in_array($userRole, $allowedRoles)) {
-            // Redirigir a la vista que le corresponde si intenta entrar a otra
-            $properUrl = self::getRedirectUrlForRole($userRole);
-            header("Location: {$properUrl}?error=acceso_no_autorizado");
-            exit;
-        }
-
-        return [
-            'id' => $_SESSION['user_id'],
-            'nombre' => $_SESSION['user_nombre'],
-            'apellido' => $_SESSION['user_apellido'],
-            'email' => $_SESSION['user_email'],
-            'rol' => $_SESSION['user_rol'],
-            'direccion' => $_SESSION['user_direccion'] ?? ''
-        ];
+        require_once __DIR__ . '/../middleware/auth.php';
+        return requireUser($allowedRoles);
     }
 
     /**

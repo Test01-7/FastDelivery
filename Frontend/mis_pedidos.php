@@ -1,23 +1,6 @@
 <?php
-session_start();
-require_once __DIR__ . '/includes/productos.php';
-require_once __DIR__ . '/../Backend/services/pedidos.php';
-
-$cliente_id = !empty($_SESSION['user_id']) ? (int)$_SESSION['user_id'] : null;
-$pedidosDB = PedidoService::getPedidos($cliente_id);
-
-$pedidosSession = isset($_SESSION['pedidos']) ? $_SESSION['pedidos'] : [];
-
-$mapaPedidos = [];
-foreach ($pedidosDB as $p) {
-    $mapaPedidos[$p['id_pedido']] = $p;
-}
-foreach ($pedidosSession as $p) {
-    if (!isset($mapaPedidos[$p['id_pedido']])) {
-        $mapaPedidos[$p['id_pedido']] = $p;
-    }
-}
-$pedidos = array_values($mapaPedidos);
+require_once __DIR__ . '/../Backend/controllers/consultas_pedidos.php';
+$pedidos = pedidosDelUsuario($currentUser);
 
 $pedidos_actuales = array_filter($pedidos, function($p) {
     $st = strtolower($p['estado']);

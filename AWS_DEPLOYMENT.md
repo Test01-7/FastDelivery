@@ -96,5 +96,40 @@ Las cuentas iniciales creadas por [SQL.db](file:///c:/Users/ASUS/Desktop/FastDel
 | Rol | Usuario / Correo | Contraseña | Destino al Iniciar Sesión |
 | :--- | :--- | :--- | :--- |
 | **Administrador** | `admin@fastdelivery.com` | `admin123` | [Panel de Productos (admin.php)](file:///c:/Users/ASUS/Desktop/FastDelivery/Frontend/admin.php) |
-| **Cliente** | `cliente@fastdelivery.com` | `cliente123` | [Seleccionar Productos (productos.php)](file:///c:/Users/ASUS/Desktop/FastDelivery/Frontend/productos.php) |
-| **Repartidor** | `repartidor@fastdelivery.com` | `repartidor123` | [Panel de Repartidor (repartidor.php)](file:///c:/Users/ASUS/Desktop/FastDelivery/Frontend/repartidor.php) |
+| **Cliente** | `cliente@fastdelivery.com` | `cliente123` | [Catálogo (index.php)](Frontend/index.php) |
+| **Repartidor** | `repartidor@fastdelivery.com` | `repartidor123` | [Pedidos (mis_pedidos.php)](Frontend/mis_pedidos.php) |
+
+El rol repartidor consulta sus pedidos asignados en `Frontend/mis_pedidos.php`. El administrador dispone de paneles de productos, usuarios y pedidos.
+
+
+## Organización y flujos de la aplicación
+
+- `Frontend/login.php` y `Frontend/register.php`: acceso y registro independiente. El registro público siempre crea clientes.
+- `Frontend/checkout.php`: carrito editable y formulario de entrega/tarjeta. Requiere sesión, conserva el carrito al iniciar sesión y utiliza pago simulado; no envía ni guarda datos bancarios.
+- `Frontend/admin.php?panel=productos|usuarios|pedidos`: panel verde con navegación lateral, acceso exclusivo de administradores y formularios simplificados.
+- `Backend/bootstrap.php`: configuración y carga compartida. `config/` contiene la conexión PDO; `database/` la inicialización; `middleware/` la validación de sesión y rol; `controllers/` procesa solicitudes; `services/` contiene las operaciones de negocio.
+- `Frontend/procesar_pedido.php` conserva la respuesta JSON (`status`, `mensaje`, `pedido`). Las compras requieren `checkout_token`, emitido por el checkout; repetir el mismo token devuelve el pedido ya registrado.
+- `APP_TIMEZONE` permite configurar la zona horaria; por defecto se usa `America/Lima` tanto para PHP como para la sesión MySQL.
+
+### Administración y conservación del historial
+
+Los productos se desactivan al eliminarlos. Usuarios dispone de acciones distintas para desactivar y eliminar: la eliminación definitiva se rechaza si el usuario está vinculado como cliente o repartidor a pedidos. No se permite eliminar, desactivar ni quitar el rol al administrador conectado o al último administrador activo. Editar la contraseña dejándola vacía conserva el hash actual.
+
+Pedidos permite consultar detalle y editar dirección, referencia, repartidor activo y estado. No permite crear pedidos manualmente ni editar sus productos. Eliminar cancela el pedido y restaura stock una sola vez; conserva los pagos y el historial, sin ejecutar reembolsos. No se pueden cancelar pedidos entregados ni reactivar los cancelados.
+
+### Inicialización y pruebas
+
+**SQL.db elimina las tablas existentes. No debe ejecutarse sobre una base con datos que se deban conservar.** La aplicación nunca ejecuta este script automáticamente. La entrada de inicialización está bloqueada por HTTP y requiere `php Backend/database/init.php --reset` por CLI, solo para bases nuevas o de pruebas.
+
+`php tests/integration.php` copia únicamente la estructura de las tablas a un esquema temporal `fastdelivery_test_*`, ejecuta las pruebas y lo elimina al finalizar. Requiere permiso de MySQL para crear bases temporales; no modifica los registros de la base original. Para verificación HTTP/visual, `php tests/integration.php --keep` conserva el esquema y guarda su nombre en `.runtime/test-db.json`. Configurar `DB_NAME` con ese nombre antes de iniciar el servidor, y ejecutar `python tests/http_checks.py` contra `http://127.0.0.1:8765/Frontend/`. Al finalizar, detener el servidor y ejecutar `php tests/cleanup.php` para eliminar exclusivamente ese esquema de pruebas.
+
+En entornos con directorios de sesión restringidos, usar `php -d session.save_path=RUTA_ABSOLUTA_ESCRIBIBLE -S 127.0.0.1:8765 -t .`. `.runtime/` está excluido de Git para sesiones y capturas temporales.
+
+
+## Modo de presentación de la tarea
+
+El modo `DEMO_MODE=true` está activado por defecto para esta entrega académica. En el login aparecen botones para entrar como administrador, cliente o repartidor sin escribir credenciales; cada botón selecciona la primera cuenta activa de ese rol que ya existe en MySQL. No crea ni reactiva cuentas automáticamente.
+
+En el checkout, **Rellenar datos de prueba** completa una tarjeta ficticia y los datos de contacto/entrega que estén vacíos. Después se puede pulsar **Hacer pago** para registrar el pedido y mostrar la confirmación. Los campos de tarjeta siguen sin enviarse ni guardarse. Se conservan los controles de stock, la protección contra pedidos duplicados y las relaciones de MySQL para que la exposición no deje datos inconsistentes.
+
+Configurar `DEMO_MODE=false` en `.env` restaura el acceso exclusivamente con credenciales; los botones de demostración desaparecen. Las pruebas de integración usan esta configuración para seguir verificando el comportamiento normal.

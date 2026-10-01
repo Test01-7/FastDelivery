@@ -27,6 +27,9 @@ define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
 define('DB_CHARSET', getenv('DB_CHARSET') ?: 'utf8mb4');
 
+// Proyecto académico: acceso rápido y formularios simplificados para la exposición.
+define('DEMO_MODE', getenv('DEMO_MODE') === false ? true : filter_var(getenv('DEMO_MODE'), FILTER_VALIDATE_BOOLEAN));
+
 // URL Base del Proyecto (Detecta automáticamente protocolo y host)
 $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? "https://" : "http://";
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost:8000';
@@ -35,6 +38,7 @@ $baseDir = preg_replace('/(\/Frontend|\/Backend.*)$/', '', $scriptDir);
 define('BASE_URL', rtrim($protocol . $host . $baseDir, '/'));
 
 // Iniciar sesión si no está iniciada
-if (session_status() === PHP_SESSION_NONE) {
+date_default_timezone_set(getenv('APP_TIMEZONE') ?: 'America/Lima');
+if (PHP_SAPI !== 'cli' && session_status() === PHP_SESSION_NONE) {
     session_start();
 }
