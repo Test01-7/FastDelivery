@@ -78,7 +78,7 @@ function renderProductos() {
   if (!container) return;
 
   const lista = PRODUCTOS.filter(item => {
-    const coincideCat = categoriaActiva === 'todos' || item.categoria === categoriaActiva;
+    const coincideCat = categoriaActiva === 'todos' || (item.categorias || [item.categoria]).includes(categoriaActiva);
     const coincideBusqueda = item.nombre.toLowerCase().includes(busquedaTexto) ||
                              item.unidad.toLowerCase().includes(busquedaTexto);
     return coincideCat && coincideBusqueda;

@@ -1,4 +1,15 @@
 const dialog = document.getElementById('confirm-dialog');
+const imageFile = document.getElementById('product-image-file');
+if (imageFile) {
+  const preview = document.getElementById('product-image-preview');
+  const originalImage = preview.src;
+  let previewUrl = null;
+  imageFile.addEventListener('change', () => {
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    previewUrl = imageFile.files[0] ? URL.createObjectURL(imageFile.files[0]) : null;
+    preview.src = previewUrl || originalImage;
+  });
+}
 let pendingForm = null;
 let submitting = false;
 document.querySelectorAll('form[data-confirm]').forEach(form => {

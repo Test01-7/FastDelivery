@@ -24,7 +24,7 @@
   <section class="card">
   <?php if ($showForm): ?>
    <section class="editor" id="editor"><h2><?= $panel === 'pedidos' ? 'Detalle y gestión del pedido' : (!empty($editing['id']) ? 'Editar ' : 'Crear ') . ($panel === 'productos' ? 'producto' : 'usuario') ?></h2>
-    <form method="post" action="<?= e(adminLink()) ?>">
+    <form method="post" action="<?= e(adminLink()) ?>" enctype="multipart/form-data">
      <input type="hidden" name="action" value="save"><input type="hidden" name="id" value="<?= e($editing['id'] ?? 0) ?>">
      <div class="form-grid">
      <?php if ($panel === 'productos'): ?>
@@ -34,7 +34,8 @@
       <label class="field">Stock<input type="number" name="stock" required min="0" step="1" value="<?= e($editing['stock'] ?? 0) ?>"></label>
       <label class="field">Unidad de medida<input name="unidad_medida" required maxlength="20" value="<?= e($editing['unidad_medida'] ?? 'unidad') ?>"></label>
       <label class="field">Disponibilidad<select name="disponible"><option value="1" <?= ($editing['disponible'] ?? 1) ? 'selected' : '' ?>>Disponible</option><option value="0" <?= isset($editing['disponible']) && !$editing['disponible'] ? 'selected' : '' ?>>Desactivado</option></select></label>
-      <label class="field wide">Imagen (URL o ruta)<input name="imagen_url" maxlength="255" value="<?= e($editing['imagen_url'] ?? 'assets/images/default.svg') ?>"></label>
+      <label class="field wide">Imagen del producto<input type="file" name="imagen" id="product-image-file" accept="image/jpeg,image/png,image/webp,image/gif"><small>JPG, PNG, WebP o GIF. Máximo 5 MB. Si no seleccionas un archivo, se conserva la imagen actual.</small></label>
+      <div class="wide" style="margin-bottom:16px"><img id="product-image-preview" src="<?= e($editing['imagen_url'] ?? 'assets/images/default.svg') ?>" alt="Vista previa del producto" style="width:120px;height:120px;object-fit:contain;border-radius:10px;background:white"></div>
       <label class="field wide">Descripción<textarea name="descripcion"><?= e($editing['descripcion'] ?? '') ?></textarea></label>
      <?php elseif ($panel === 'usuarios'): ?>
       <label class="field">Nombre<input name="nombre" required maxlength="100" value="<?= e($editing['nombre'] ?? '') ?>"></label>

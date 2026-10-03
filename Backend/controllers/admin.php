@@ -3,6 +3,7 @@ require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../services/productos.php';
 require_once __DIR__ . '/../services/usuarios.php';
 require_once __DIR__ . '/../services/pedidos.php';
+require_once __DIR__ . '/../services/imagenes.php';
 $currentUser = requireUser(['administrador']);
 $panel = in_array($_GET['panel'] ?? '', ['productos', 'usuarios', 'pedidos'], true) ? $_GET['panel'] : 'productos';
 $filters = ['panel' => $panel];
@@ -18,8 +19,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     $id = (int)($_POST['id'] ?? 0);
     if ($panel === 'productos' && in_array($action, ['save', 'delete'], true)) {
-        $result = $action === 'delete' ? ProductoService::eliminarProducto($id) :
-            ($id ? ProductoService::actualizarProducto($id, $_POST) : ProductoService::crearProducto($_POST));
+        $uploaded = null;
+        try {
+            $data = $_POST;
+            unset($data['imagen_url']);
+            if ($action === 'save') {
+                $uploaded = ImagenService::subir($_FILES['imagen'] ?? null);
+                if ($uploaded) $data['imagen_url'] = $uploaded;
+            }
+            $result = $action === 'delete' ? ProductoService::eliminarProducto($id) :
+                ($id ? ProductoService::actualizarProducto($id, $data) : ProductoService::crearProducto($data));
+        } catch (DomainException $exception) {
+            $result = ['success' => false, 'message' => $exception->getMessage()];
+        }
+        if (!$result['success'] && $uploaded) {
+            ImagenService::descartar($uploaded);
+            $result['message'] .= ' Vuelve a seleccionar la imagen antes de guardar.';
+        }
     } elseif ($panel === 'usuarios' && in_array($action, ['save', 'deactivate', 'delete'], true)) {
         $result = $action === 'save' ? UsuarioService::guardar($_POST, (int)$currentUser['id']) :
             UsuarioService::retirar($id, (int)$currentUser['id'], $action === 'delete');

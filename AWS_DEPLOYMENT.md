@@ -104,6 +104,10 @@ El rol repartidor consulta sus pedidos asignados en `Frontend/mis_pedidos.php`. 
 
 ## Organización y flujos de la aplicación
 
+El filtro de la tienda admite las categorías antiguas: «Super» se distribuye según el producto entre alimentos, bebidas y limpieza; «Cuidado y Limpieza» pertenece a limpieza e higiene. No requiere reinicializar ni modificar los registros existentes.
+
+El formulario administrativo de productos permite seleccionar imágenes JPG, PNG, WebP o GIF y muestra una vista previa. Se guardan en `Frontend/assets/uploads/productos/`; la carpeta necesita permisos de escritura del servidor PHP y debe conservarse al desplegar. Editar sin seleccionar otro archivo mantiene la imagen actual. El límite de la aplicación es 5 MB, sujeto también a `upload_max_filesize` y `post_max_size` de PHP.
+
 - `Frontend/login.php` y `Frontend/register.php`: acceso y registro independiente. El registro público siempre crea clientes.
 - `Frontend/checkout.php`: carrito editable y formulario de entrega/tarjeta. Requiere sesión, conserva el carrito al iniciar sesión y utiliza pago simulado; no envía ni guarda datos bancarios.
 - `Frontend/admin.php?panel=productos|usuarios|pedidos`: panel verde con navegación lateral, acceso exclusivo de administradores y formularios simplificados.
