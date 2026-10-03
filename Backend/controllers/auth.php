@@ -14,9 +14,7 @@ function handleAuth(string $action): array {
             exit;
         }
     } else {
-        $result = isset($_POST['demo_role'])
-            ? AuthService::demo($_POST['demo_role'])
-            : AuthService::login($_POST['email'] ?? '', $_POST['password'] ?? '');
+        $result = AuthService::login($_POST['email'] ?? '', $_POST['password'] ?? '');
         if ($result['success']) {
             $destination = $result['rol'] === 'cliente' ? returnPage($_POST['return'] ?? null) : $result['redirect'];
             header('Location: ' . $destination);

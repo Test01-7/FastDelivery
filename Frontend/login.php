@@ -15,16 +15,16 @@ $notice = takeFlash();
  <?php if ($notice): ?><div class="notice" role="status"><?= e($notice['message']) ?></div><?php endif; ?>
  <?php if ($result): ?><div class="notice error" role="alert"><?= e($result['message']) ?></div><?php endif; ?>
  <?php if (DEMO_MODE): ?>
- <section class="demo-access"><span class="eyebrow">Modo presentación</span><p class="muted">Entra con un clic para mostrar cada panel.</p>
-  <form method="post" action="login.php" class="demo-roles">
-   <input type="hidden" name="return" value="<?= e($return) ?>">
-   <button class="btn" name="demo_role" value="administrador" type="submit">Administrador</button>
-   <button class="btn secondary" name="demo_role" value="cliente" type="submit">Cliente</button>
-   <button class="btn secondary" name="demo_role" value="repartidor" type="submit">Repartidor</button>
-  </form>
+ <section class="demo-access"><span class="eyebrow">Modo presentación</span><p class="muted">Selecciona una cuenta de prueba para rellenar sus datos. Después pulsa «Iniciar sesión».</p>
+  <div class="demo-roles">
+   <button class="btn" data-demo-account="administrador" type="button">Administrador</button>
+   <button class="btn secondary" data-demo-account="cliente" type="button">Cliente</button>
+   <button class="btn secondary" data-demo-account="repartidor" type="button">Repartidor</button>
+  </div>
+  <p id="demo-account-status" class="muted" aria-live="polite">Se usan las cuentas de prueba originales del proyecto.</p>
  </section>
  <?php endif; ?>
- <form method="post" action="login.php">
+ <form method="post" action="login.php" id="login-form">
   <input type="hidden" name="return" value="<?= e($return) ?>">
   <label class="field">Correo o nombre de usuario<input name="email" autocomplete="username" required maxlength="150" value="<?= e($_POST['email'] ?? '') ?>" placeholder="tu@correo.com"></label>
   <label class="field">Contraseña<input type="password" name="password" autocomplete="current-password" required></label>
@@ -32,4 +32,4 @@ $notice = takeFlash();
  </form>
  <p class="auth-links">¿Aún no tienes cuenta? <a href="register.php?return=<?= e($return) ?>">Regístrate</a></p>
  </section>
-</main></body></html>
+</main><script src="js/login.js"></script></body></html>

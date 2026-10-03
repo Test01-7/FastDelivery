@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__ . '/../Backend/controllers/consultas_pedidos.php';
+if ($currentUser['rol'] === 'repartidor') {
+    header('Location: repartidor.php?panel=entregas');
+    exit;
+}
 $pedidos = pedidosDelUsuario($currentUser);
 
 $pedidos_actuales = array_filter($pedidos, function($p) {

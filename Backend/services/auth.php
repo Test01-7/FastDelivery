@@ -69,22 +69,6 @@ class AuthService {
         }
     }
 
-    public static function demo(string $rol): array {
-        if (!DEMO_MODE || !in_array($rol, ['administrador', 'cliente', 'repartidor'], true)) {
-            return ['success' => false, 'message' => 'El acceso de presentación no está disponible.'];
-        }
-        try {
-            $stmt = getDB()->prepare('SELECT id, nombre, apellido, email, telefono, rol, direccion_defecto FROM usuarios WHERE rol = ? AND activo = 1 ORDER BY id LIMIT 1');
-            $stmt->execute([$rol]);
-            $user = $stmt->fetch();
-            if (!$user) return ['success' => false, 'message' => 'No hay una cuenta activa de este rol para la demostración.'];
-            return self::crearSesion($user);
-        } catch (Throwable $exception) {
-            error_log($exception->getMessage());
-            return ['success' => false, 'message' => 'No se pudo abrir la demostración. Comprueba la conexión con MySQL.'];
-        }
-    }
-
     private static function crearSesion(array $user): array {
         // Regenerar ID de sesión para prevenir Session Fixation si las cabeceras no se han enviado
         if (session_status() === PHP_SESSION_NONE) {
@@ -212,7 +196,7 @@ class AuthService {
             case 'cliente':
                 return 'index.php';
             case 'repartidor':
-                return 'mis_pedidos.php';
+                return 'repartidor.php';
             default:
                 return 'index.php';
         }

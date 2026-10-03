@@ -51,7 +51,7 @@ $todos_productos = obtenerProductos();
         <a href="#catalogo">Categorías</a>
         <a href="#ofertas">Ofertas</a>
         <a href="#destacados">Destacados</a>
-        <a href="mis_pedidos.php">Mis pedidos</a>
+        <a href="<?= ($currentUser['rol'] ?? '') === 'repartidor' ? 'repartidor.php?panel=entregas' : 'mis_pedidos.php' ?>"><?= ($currentUser['rol'] ?? '') === 'repartidor' ? 'Mis entregas' : 'Mis pedidos' ?></a>
       </nav>
 
       <!-- Acciones de Usuario y Carrito -->
@@ -62,8 +62,8 @@ $todos_productos = obtenerProductos();
               ⚙️ Admin
             </a>
           <?php elseif ($currentUser['rol'] === 'repartidor'): ?>
-            <a href="mis_pedidos.php" class="btn-add" style="background:#0284c7; color:#fff; border-color:#0284c7; font-size:0.75rem;">
-              🛵 Pedidos
+            <a href="repartidor.php" class="btn-add" style="background:#16a34a; color:#fff; border-color:#16a34a; font-size:0.75rem;">
+              🛵 Panel de repartidor
             </a>
           <?php endif; ?>
 

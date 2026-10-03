@@ -97,9 +97,9 @@ Las cuentas iniciales creadas por [SQL.db](file:///c:/Users/ASUS/Desktop/FastDel
 | :--- | :--- | :--- | :--- |
 | **Administrador** | `admin@fastdelivery.com` | `admin123` | [Panel de Productos (admin.php)](file:///c:/Users/ASUS/Desktop/FastDelivery/Frontend/admin.php) |
 | **Cliente** | `cliente@fastdelivery.com` | `cliente123` | [Catálogo (index.php)](Frontend/index.php) |
-| **Repartidor** | `repartidor@fastdelivery.com` | `repartidor123` | [Pedidos (mis_pedidos.php)](Frontend/mis_pedidos.php) |
+| **Repartidor** | `repartidor@fastdelivery.com` | `repartidor123` | [Panel de repartidor](Frontend/repartidor.php) |
 
-El rol repartidor consulta sus pedidos asignados en `Frontend/mis_pedidos.php`. El administrador dispone de paneles de productos, usuarios y pedidos.
+El rol repartidor entra a `Frontend/repartidor.php`, con pedidos disponibles, entregas propias e historial. Puede tomar pedidos sin repartidor, iniciar el envío y marcarlo como entregado. Las operaciones verifican la asignación dentro de una transacción, y sus cambios se reflejan en seguimiento y Mis pedidos del cliente. El administrador dispone de paneles de productos, usuarios y pedidos.
 
 
 ## Organización y flujos de la aplicación
@@ -111,6 +111,7 @@ El formulario administrativo de productos permite seleccionar imágenes JPG, PNG
 - `Frontend/login.php` y `Frontend/register.php`: acceso y registro independiente. El registro público siempre crea clientes.
 - `Frontend/checkout.php`: carrito editable y formulario de entrega/tarjeta. Requiere sesión, conserva el carrito al iniciar sesión y utiliza pago simulado; no envía ni guarda datos bancarios.
 - `Frontend/admin.php?panel=productos|usuarios|pedidos`: panel verde con navegación lateral, acceso exclusivo de administradores y formularios simplificados.
+- `Frontend/repartidor.php?panel=disponibles|entregas|historial`: panel verde del repartidor con contacto, dirección y productos de cada entrega. Solo puede actualizar sus pedidos asignados; no puede cancelar ni modificar la compra.
 - `Backend/bootstrap.php`: configuración y carga compartida. `config/` contiene la conexión PDO; `database/` la inicialización; `middleware/` la validación de sesión y rol; `controllers/` procesa solicitudes; `services/` contiene las operaciones de negocio.
 - `Frontend/procesar_pedido.php` conserva la respuesta JSON (`status`, `mensaje`, `pedido`). Las compras requieren `checkout_token`, emitido por el checkout; repetir el mismo token devuelve el pedido ya registrado.
 - `APP_TIMEZONE` permite configurar la zona horaria; por defecto se usa `America/Lima` tanto para PHP como para la sesión MySQL.
@@ -132,8 +133,8 @@ En entornos con directorios de sesión restringidos, usar `php -d session.save_p
 
 ## Modo de presentación de la tarea
 
-El modo `DEMO_MODE=true` está activado por defecto para esta entrega académica. En el login aparecen botones para entrar como administrador, cliente o repartidor sin escribir credenciales; cada botón selecciona la primera cuenta activa de ese rol que ya existe en MySQL. No crea ni reactiva cuentas automáticamente.
+El modo `DEMO_MODE=true` está activado por defecto para esta entrega académica. En el login aparecen botones que rellenan el correo y la contraseña de las cuentas de prueba originales (tabla anterior). No envían el formulario ni abren una sesión: después hay que pulsar **Iniciar sesión** y las credenciales se verifican normalmente. Si se cambia la contraseña o se elimina una cuenta de prueba, sus datos de demostración deben actualizarse en `Frontend/js/login.js`. No se crean, modifican ni reactivan cuentas automáticamente.
 
 En el checkout, **Rellenar datos de prueba** completa una tarjeta ficticia y los datos de contacto/entrega que estén vacíos. Después se puede pulsar **Hacer pago** para registrar el pedido y mostrar la confirmación. Los campos de tarjeta siguen sin enviarse ni guardarse. Se conservan los controles de stock, la protección contra pedidos duplicados y las relaciones de MySQL para que la exposición no deje datos inconsistentes.
 
-Configurar `DEMO_MODE=false` en `.env` restaura el acceso exclusivamente con credenciales; los botones de demostración desaparecen. Las pruebas de integración usan esta configuración para seguir verificando el comportamiento normal.
+Configurar `DEMO_MODE=false` en `.env` oculta los botones para rellenar credenciales y el botón de datos de prueba del checkout.
